@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Instant Summons",
+  "version": "1.0",
+  "description": "Instantly summon (download) monster tokens by name on the Owlbear Rodeo token page.",
+  "permissions": [
+    "downloads"
+  ],
+  "content_scripts": [
+    {
+      "js": [
+        "scripts/content.js"
+      ],
+      "matches": [
+        "https://www.owlbear.rodeo/game/*"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
