@@ -1,1 +1,1 @@
-Chrome extension that allows you to instantly summon (download) monster tokens by name on the Owlbear Rodeo token page.
+Chrome extension that allows you to instantly summon (upload) monster tokens by name on the Owlbear Rodeo token page.
