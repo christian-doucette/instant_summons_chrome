@@ -12,6 +12,14 @@ const MONSTER_SEARCH_BAR = `
 </div>
 `
 
+const ALLOWED_SOURCES = ["MM", "MPMM"];
+
+// Registers addMonsterSearchBar on token button
+const edit_tokens_button = document.querySelector('[title="Edit Tokens"]');
+edit_tokens_button.onclick = function() {addMonsterSearchBar()};
+
+
+
 // formats link to pull image from
 function format_link(source, monster_name) {
   return `https://5e.tools/img/${source}/${monster_name}.png`;
@@ -23,51 +31,65 @@ function format_filename(monster_name) {
 }
 
 
-// Registers addMonsterSearchBar on token button
-const edit_tokens_button = document.querySelector('[title="Edit Tokens"]');
-edit_tokens_button.onclick = function() {addMonsterSearchBar()};
 
-
-
-async function createFile(monster_name) {
-  let mm_response = await fetch(format_link('MM', monster_name));
-  if (mm_response.ok) {
-    let data = await mm_response.blob();
-    let metadata = {type: 'image/png'};
-    return new File([data], format_filename(monster_name), metadata);
-  }
-
-  let mpmm_response = await fetch(format_link('MPMM', monster_name));
-  if (mpmm_response.ok) {
-    let data = await mpmm_response.blob();
-    let metadata = {type: 'image/png'};
-    return new File([data], format_filename(monster_name), metadata);
-  }
-
-  throw new Error('Monster not found');
+// checks if the monster is included in a given source
+// by making a HEAD request against the image site
+async function checkSource(source, monster_name) {
+  let response = await fetch(format_link(source, monster_name), {method: 'HEAD'})
+  return response.ok
 }
+
+// finds the source which contains the given monster
+// if none do, returns undefined
+async function findCorrectSource(monster_name) {
+  for (let i = 0; i < ALLOWED_SOURCES.length; i++) {
+    let is_included = await checkSource(ALLOWED_SOURCES[i], monster_name);
+    if (is_included) {
+      return ALLOWED_SOURCES[i];
+    }
+  }
+  return undefined;
+}
+
+
+
+// creates file from a given image url
+async function createFile(source, monster_name) {
+  let response = await fetch(format_link(source, monster_name));
+  let data = await response.blob();
+  let metadata = {type: 'image/png'};
+  return new File([data], format_filename(monster_name), metadata);
+}
+
+// uploads monster image to owlbear form
+async function uploadFile(source, monster_name) {
+  const designFile = await createFile(source, monster_name);
+  const input = document.getElementsByTagName('input')[0];
+  const dt = new DataTransfer();
+  dt.items.add(designFile);
+  input.files = dt.files;
+
+  const event = new Event('change', {bubbles: true});
+  input.dispatchEvent(event);
+}
+
 
 
 // uploads image for monster
 async function uploadMonster() {
-  const monster_input_field = document.querySelector('[title="Monster Input Field"]');
-  try {
-    const designFile = await createFile(monster_input_field.value);
-    const input = document.getElementsByTagName('input')[0];
-    const dt = new DataTransfer();
-    dt.items.add(designFile);
-    input.files = dt.files;
+  const monster_name = document.querySelector('[title="Monster Input Field"]').value;
+  const correct_source = await findCorrectSource(monster_name);
 
-    const event = new Event('change', {bubbles: true});
-    input.dispatchEvent(event);
+  // if a source was found, uploads image
+  if (correct_source) {
+    await uploadFile(correct_source, monster_name);
   }
-
-  catch (e) {
-    console.error(e);
-    window.alert(e.message);
+  // if not, sends alert to user
+  else {
+    window.alert("Monster name not found");
   }
-
 }
+
 
 
 // Adds my monster search bar to token page
