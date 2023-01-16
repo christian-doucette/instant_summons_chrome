@@ -1,7 +1,7 @@
 const MONSTER_SEARCH_BAR = `
 <div class="css-1rc500d">
    <div class="css-146l5zf">
-      <input title="Monster Input Field" placeholder="Import Monster Token"  class="css-nsmwue" value="">
+      <input title="Monster Input Field" placeholder="Upload Monster Token by Name"  class="css-nsmwue" value="">
    </div>
    <button aria-label="Upload Monster" title="Upload Monster" class="css-6p9ci6-IconButton">
       <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24" fill="currentcolor">
@@ -19,8 +19,7 @@ function format_link(source, monster_name) {
 
 // formats path to store download
 function format_filename(monster_name) {
-  const underscored_monster_name = monster_name.toLowerCase().replace(' ', '_');
-  return `${underscored_monster_name}.png`;
+  return `${monster_name.toLowerCase()}.png`;
 }
 
 
@@ -65,6 +64,7 @@ async function uploadMonster() {
 
   catch (e) {
     console.error(e);
+    window.alert(e.message);
   }
 
 }
