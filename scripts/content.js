@@ -13,14 +13,14 @@ const MONSTER_SEARCH_BAR = `
 `
 
 // formats link to pull image from
-function format_link(monster_name) {
-  return `https://5e.tools/img/MM/${monster_name}.png`
+function format_link(source, monster_name) {
+  return `https://5e.tools/img/${source}/${monster_name}.png`;
 }
 
 // formats path to store download
 function format_filename(monster_name) {
-  const underscored_monster_name = monster_name.toLowerCase().replace(' ', '_')
-  return `${underscored_monster_name}.png`
+  const underscored_monster_name = monster_name.toLowerCase().replace(' ', '_');
+  return `${underscored_monster_name}.png`;
 }
 
 
@@ -31,25 +31,42 @@ edit_tokens_button.onclick = function() {addMonsterSearchBar()};
 
 
 async function createFile(monster_name) {
-    let response = await fetch(format_link(monster_name));
-    let data = await response.blob();
+  let mm_response = await fetch(format_link('MM', monster_name));
+  if (mm_response.ok) {
+    let data = await mm_response.blob();
     let metadata = {type: 'image/png'};
     return new File([data], format_filename(monster_name), metadata);
+  }
+
+  let mpmm_response = await fetch(format_link('MPMM', monster_name));
+  if (mpmm_response.ok) {
+    let data = await mpmm_response.blob();
+    let metadata = {type: 'image/png'};
+    return new File([data], format_filename(monster_name), metadata);
+  }
+
+  throw new Error('Monster not found');
 }
 
 
 // uploads image for monster
 async function uploadMonster() {
   const monster_input_field = document.querySelector('[title="Monster Input Field"]');
+  try {
+    const designFile = await createFile(monster_input_field.value);
+    const input = document.getElementsByTagName('input')[0];
+    const dt = new DataTransfer();
+    dt.items.add(designFile);
+    input.files = dt.files;
 
-  const designFile = await createFile(monster_input_field.value);
-  const input = document.getElementsByTagName('input')[0]
-  const dt = new DataTransfer();
-  dt.items.add(designFile);
-  input.files = dt.files;
+    const event = new Event('change', {bubbles: true});
+    input.dispatchEvent(event);
+  }
 
-  const event = new Event('change', {bubbles: true});
-  input.dispatchEvent(event)
+  catch (e) {
+    console.error(e);
+  }
+
 }
 
 
