@@ -12,11 +12,31 @@ const MONSTER_SEARCH_BAR = `
 </div>
 `
 
+// Monster sources that images will be pulled from
 const ALLOWED_SOURCES = ["MM", "MPMM"];
 
-// Registers addMonsterSearchBar on token button
-const edit_tokens_button = document.querySelector('[title="Edit Tokens"]');
-edit_tokens_button.onclick = function() {addMonsterSearchBar()};
+
+// add mutation observer
+// when monster token page pulled up
+// adds search bar
+const observer = new MutationObserver((mutationList) => {
+  for (const mutation of mutationList) {
+    if (mutation.type == 'childList' &&
+        mutation.addedNodes.length > 0 &&
+        mutation.addedNodes[0].className == 'ReactModal__Overlay' &&
+        mutation.addedNodes[0].parentElement == document.getElementsByClassName('ReactModalPortal')[11]
+    ) {
+      addMonsterSearchBar()
+    }
+  }
+});
+
+// enables the mutation observer
+root_element = document.body
+observer.observe(root_element, {subtree: true, childList: true});
+
+
+
 
 
 
@@ -93,11 +113,7 @@ async function uploadMonster() {
 
 
 // Adds my monster search bar to token page
-async function addMonsterSearchBar() {
-  // wait 100ms
-  // hacky fix I'll remove later
-  await new Promise(resolve => setTimeout(resolve, 100));
-
+function addMonsterSearchBar() {
   // adds monster search bar to page
   const search_bar = document.getElementsByClassName('css-1rc500d')[0];
   search_bar.insertAdjacentHTML('afterend', MONSTER_SEARCH_BAR);

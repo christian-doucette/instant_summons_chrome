@@ -13,7 +13,7 @@
         "scripts/content.js"
       ],
       "matches": [
-        "https://www.owlbear.rodeo/game/*"
+        "https://www.owlbear.rodeo/*"
       ]
     }
   ]
