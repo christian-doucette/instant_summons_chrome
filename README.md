@@ -1,8 +1,8 @@
 # Instant Summons
-Instant Summons is a Chrome extension that allows you to instantly summon (upload) monster tokens by name on the Owlbear Rodeo token tab. Just enter the name of an official DnD monster and click upload.
+*Instant Summons* is a Chrome extension that allows you to instantly summon (upload) monster tokens by name on the Owlbear Rodeo token tab. Just enter the name of an official DnD monster and click the button to upload.
 
 ### Release
-I haven't published Instant Sumons on the Chrome Web Store yet, but you can still use it. All you have to do is:
+I haven't published *Instant Summons* on the Chrome Web Store yet, but you can still use it. All you have to do is:
 1. Download the code from this repository to your local machine
 2. Go to chrome://extensions/ on Google Chrome
 3. Turn on Developer Mode
