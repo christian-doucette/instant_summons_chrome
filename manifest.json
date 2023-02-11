@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Instant Summons",
   "version": "1.0",
-  "description": "Instantly summon (upload) monster tokens by name on the Owlbear Rodeo token page.",
+  "description": "Instantly summon (upload) monster tokens by name on Owlbear Rodeo token tab.",
   "icons": {
     "48": "images/icon-48.png",
     "128": "images/icon-128.png"
