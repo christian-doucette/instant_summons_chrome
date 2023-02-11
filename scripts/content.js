@@ -1,3 +1,69 @@
+// Monster class
+// fetches, stores and formats monster data
+class Monster {
+  constructor(name) {
+    this.name = name;
+    this.ALLOWED_SOURCES = ["MM", "MPMM"];
+  }
+
+  formatUrl(source) {
+    return `https://5e.tools/img/${source}/${this.name}.png`;
+  }
+
+  formatFilename() {
+    return `${this.name.toLowerCase()}.png`;
+  }
+
+  // returns the source associated with this monster
+  // or undefined if none are
+  async findSource() {
+    for (let i = 0; i < this.ALLOWED_SOURCES.length; i++) {
+      let isIncluded = await this.#isValidSource(this.ALLOWED_SOURCES[i]);
+      if (isIncluded) {
+        return this.ALLOWED_SOURCES[i];
+      }
+    }
+    return undefined;
+  }
+
+  // checks if a source by making a HEAD request
+  async #isValidSource(source) {
+    let response = await fetch(this.formatUrl(source), {method: 'HEAD'});
+    return response.ok;
+  }
+}
+
+
+
+
+
+// FileUploader class
+// uploads file from url to input element
+class FileUploader {
+  async uploadFile(input, sourceUrl, uploadFilename) {
+    const file = await this.#createFile(sourceUrl, uploadFilename);
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+  
+    const event = new Event('change', {bubbles: true});
+    input.dispatchEvent(event);
+  }
+
+  async #createFile(sourceUrl, uploadFilename) {
+    let response = await fetch(sourceUrl);
+    let data = await response.blob();
+    let metadata = {type: 'image/png'};
+    return new File([data], uploadFilename, metadata);
+  }
+}
+
+
+
+
+
+// Monster search bar component
+// Adds monster search bar to token tab
 const MONSTER_SEARCH_BAR = `
 <div class="css-1rc500d">
    <div class="css-146l5zf">
@@ -10,99 +76,19 @@ const MONSTER_SEARCH_BAR = `
       </svg>
    </button>
 </div>
-`
-
-// Monster sources that images will be pulled from
-const ALLOWED_SOURCES = ["MM", "MPMM"];
-
-
-// add mutation observer
-// when monster token page pulled up
-// adds search bar
-const observer = new MutationObserver((mutationList) => {
-  for (const mutation of mutationList) {
-    if (mutation.type == 'childList' &&
-        mutation.addedNodes.length > 0 &&
-        mutation.addedNodes[0].className == 'ReactModal__Overlay' &&
-        mutation.addedNodes[0].parentElement == document.getElementsByClassName('ReactModalPortal')[11]
-    ) {
-      addMonsterSearchBar()
-    }
-  }
-});
-
-// enables the mutation observer
-root_element = document.body
-observer.observe(root_element, {subtree: true, childList: true});
-
-
-
-
-
-
-// formats link to pull image from
-function format_link(source, monster_name) {
-  return `https://5e.tools/img/${source}/${monster_name}.png`;
-}
-
-// formats path to store download
-function format_filename(monster_name) {
-  return `${monster_name.toLowerCase()}.png`;
-}
-
-
-
-// checks if the monster is included in a given source
-// by making a HEAD request against the image site
-async function checkSource(source, monster_name) {
-  let response = await fetch(format_link(source, monster_name), {method: 'HEAD'})
-  return response.ok
-}
-
-// finds the source which contains the given monster
-// if none do, returns undefined
-async function findCorrectSource(monster_name) {
-  for (let i = 0; i < ALLOWED_SOURCES.length; i++) {
-    let is_included = await checkSource(ALLOWED_SOURCES[i], monster_name);
-    if (is_included) {
-      return ALLOWED_SOURCES[i];
-    }
-  }
-  return undefined;
-}
-
-
-
-// creates file from a given image url
-async function createFile(source, monster_name) {
-  let response = await fetch(format_link(source, monster_name));
-  let data = await response.blob();
-  let metadata = {type: 'image/png'};
-  return new File([data], format_filename(monster_name), metadata);
-}
-
-// uploads monster image to owlbear form
-async function uploadFile(source, monster_name) {
-  const designFile = await createFile(source, monster_name);
-  const input = document.getElementsByTagName('input')[0];
-  const dt = new DataTransfer();
-  dt.items.add(designFile);
-  input.files = dt.files;
-
-  const event = new Event('change', {bubbles: true});
-  input.dispatchEvent(event);
-}
-
-
+`;
 
 // uploads image for monster
 async function uploadMonster() {
-  const monster_name = document.querySelector('[title="Monster Input Field"]').value;
-  const correct_source = await findCorrectSource(monster_name);
+  const textInput = document.querySelector('[title="Monster Input Field"]');
+  const fileInput = document.getElementsByTagName('input')[0];
+  var monster = new Monster(textInput.value);
+  const correctSource = await monster.findSource();
 
   // if a source was found, uploads image
-  if (correct_source) {
-    await uploadFile(correct_source, monster_name);
+  if (correctSource) {
+    var uploader = new FileUploader();
+    await uploader.uploadFile(fileInput, monster.formatUrl(correctSource), monster.formatFilename());
   }
   // if not, sends alert to user
   else {
@@ -110,15 +96,34 @@ async function uploadMonster() {
   }
 }
 
-
-
-// Adds my monster search bar to token page
+// adds monster search bar to token tab with registered function
 function addMonsterSearchBar() {
   // adds monster search bar to page
-  const search_bar = document.getElementsByClassName('css-1rc500d')[0];
-  search_bar.insertAdjacentHTML('afterend', MONSTER_SEARCH_BAR);
+  const tokenSearchBar = document.getElementsByClassName('css-1rc500d')[0];
+  tokenSearchBar.insertAdjacentHTML('afterend', MONSTER_SEARCH_BAR);
 
   // registers uploadMonster function on monster search bar button press
-  const upload_monster_button = document.querySelector('[title="Upload Monster"]');
-  upload_monster_button.onclick = function() {uploadMonster()};
+  const uploadMonsterButton = document.querySelector('[title="Upload Monster"]');
+  uploadMonsterButton.onclick = function() {uploadMonster()};
 }
+
+// checks if a given mutation is due to the token tab being opened
+function isTokenTabOpen(mutation) {
+  return mutation.type == 'childList' &&
+  mutation.addedNodes.length > 0 &&
+  mutation.addedNodes[0].className == 'ReactModal__Overlay' &&
+  mutation.addedNodes[0].parentElement == document.getElementsByClassName('ReactModalPortal')[11];
+}
+
+// add mutation observer
+// when token tab opened, adds monster search bar
+const observer = new MutationObserver((mutationList) => {
+  for (const mutation of mutationList) {
+    if (isTokenTabOpen(mutation)) {
+      addMonsterSearchBar()
+    }
+  }
+});
+
+// enables the mutation observer on document body
+observer.observe(document.body, {subtree: true, childList: true});
