@@ -4,32 +4,35 @@ class Monster {
   constructor(name) {
     this.name = name;
     this.ALLOWED_SOURCES = ["MM", "MPMM"];
+    this.source;
+    this.size;
   }
 
-  formatUrl(source) {
-    return `https://5e.tools/img/${source}/${this.name}.png`;
+  formatUrl() {
+    return `https://5e.tools/img/${this.source}/${this.name}.png`;
   }
 
   formatFilename() {
     return `${this.name.toLowerCase()}.png`;
   }
 
-  // returns the source associated with this monster
-  // or undefined if none are
-  async findSource() {
-    for (let i = 0; i < this.ALLOWED_SOURCES.length; i++) {
-      let isIncluded = await this.#isValidSource(this.ALLOWED_SOURCES[i]);
-      if (isIncluded) {
-        return this.ALLOWED_SOURCES[i];
-      }
-    }
-    return undefined;
+  isValid() {
+    return !!this.source;
   }
 
-  // checks if a source by making a HEAD request
-  async #isValidSource(source) {
-    let response = await fetch(this.formatUrl(source), {method: 'HEAD'});
-    return response.ok;
+  async loadData() {
+    // memoization
+    if (this.source && this.size) return;
+
+    // pulls the data for this monster by name from monster_data.json
+    var monster_data = await fetch(chrome.runtime.getURL('/data/monster_data.json'))
+      .then(response => response.json())
+      .then(json => json[this.name])
+
+    if (monster_data) {
+      this.source = monster_data['source']
+      this.size = monster_data['size']
+    }
   }
 }
 
@@ -45,7 +48,7 @@ class FileUploader {
     const dt = new DataTransfer();
     dt.items.add(file);
     input.files = dt.files;
-  
+
     const event = new Event('change', {bubbles: true});
     input.dispatchEvent(event);
   }
@@ -83,12 +86,12 @@ async function uploadMonster() {
   const textInput = document.querySelector('[title="Monster Input Field"]');
   const fileInput = document.getElementsByTagName('input')[0];
   var monster = new Monster(textInput.value);
-  const correctSource = await monster.findSource();
+  await monster.loadData()
 
-  // if a source was found, uploads image
-  if (correctSource) {
+  // if valid monster, uploads image
+  if (monster.isValid()) {
     var uploader = new FileUploader();
-    await uploader.uploadFile(fileInput, monster.formatUrl(correctSource), monster.formatFilename());
+    await uploader.uploadFile(fileInput, monster.formatUrl(), monster.formatFilename());
   }
   // if not, sends alert to user
   else {

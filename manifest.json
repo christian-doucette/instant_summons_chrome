@@ -16,5 +16,11 @@
         "https://www.owlbear.rodeo/*"
       ]
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["data/monster_data.json"],
+      "matches": ["https://www.owlbear.rodeo/*"]
+    }
   ]
 }
