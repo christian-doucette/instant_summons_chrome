@@ -27,12 +27,17 @@ class Monster {
     // pulls the data for this monster by name from monster_data.json
     var monster_data = await fetch(chrome.runtime.getURL('/data/monster_data.json'))
       .then(response => response.json())
-      .then(json => json[this.name])
+      .then(json => json[this.name]);
 
     if (monster_data) {
-      this.source = monster_data['source']
-      this.size = monster_data['size']
+      this.source = monster_data['source'];
+      this.size = this.#mapSize(monster_data['size']);
     }
+  }
+
+  #mapSize(size) {
+    const MAPPING = {'T': 0.5, 'S': 0.8, 'M': 1, 'L': 2, 'H': 3, 'G': 4};
+    return MAPPING[size];
   }
 }
 
@@ -81,6 +86,22 @@ const MONSTER_SEARCH_BAR = `
 </div>
 `;
 
+
+// updates most recently uploaded monster token's size
+async function updateMonsterSize(newSize) {
+  // wait time hack I'll remove later
+  await new Promise(resolve => setTimeout(resolve, 300));
+
+  document.getElementsByClassName("css-ny4xw")[0].click();
+  document.querySelector('[title="Edit Token"]').click();
+  document.querySelector('[name="tokenSize"]').value = newSize;
+
+  const event = new Event('input', {bubbles: true});
+  document.querySelector('[name="tokenSize"]').dispatchEvent(event);
+
+  document.getElementsByClassName("css-xs4xl1")[0].click();
+}
+
 // uploads image for monster
 async function uploadMonster() {
   const textInput = document.querySelector('[title="Monster Input Field"]');
@@ -92,6 +113,7 @@ async function uploadMonster() {
   if (monster.isValid()) {
     var uploader = new FileUploader();
     await uploader.uploadFile(fileInput, monster.formatUrl(), monster.formatFilename());
+    await updateMonsterSize(monster.size);
   }
   // if not, sends alert to user
   else {
@@ -108,6 +130,7 @@ function addMonsterSearchBar() {
   // registers uploadMonster function on monster search bar button press
   const uploadMonsterButton = document.querySelector('[title="Upload Monster"]');
   uploadMonsterButton.onclick = function() {uploadMonster()};
+
 }
 
 // checks if a given mutation is due to the token tab being opened
