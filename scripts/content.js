@@ -3,7 +3,6 @@
 class Monster {
   constructor(name) {
     this.name = name;
-    this.ALLOWED_SOURCES = ["MM", "MPMM"];
   }
 
   formatUrl(source) {
@@ -17,10 +16,12 @@ class Monster {
   // returns the source associated with this monster
   // or undefined if none are
   async findSource() {
-    for (let i = 0; i < this.ALLOWED_SOURCES.length; i++) {
-      let isIncluded = await this.#isValidSource(this.ALLOWED_SOURCES[i]);
+    const enabledSources = await this.#getEnabledSources();
+
+    for (let i = 0; i < enabledSources.length; i++) {
+      let isIncluded = await this.#isValidSource(enabledSources[i]);
       if (isIncluded) {
-        return this.ALLOWED_SOURCES[i];
+        return enabledSources[i];
       }
     }
     return undefined;
@@ -30,6 +31,16 @@ class Monster {
   async #isValidSource(source) {
     let response = await fetch(this.formatUrl(source), {method: 'HEAD'});
     return response.ok;
+  }
+
+  async #getEnabledSources() {
+    let result = await chrome.storage.local.get(["enabledSources"])
+    if (result.enabledSources) {
+      return result.enabledSources
+    }
+    else {
+      return ["MM"]
+    }
   }
 }
 
@@ -45,7 +56,7 @@ class FileUploader {
     const dt = new DataTransfer();
     dt.items.add(file);
     input.files = dt.files;
-  
+
     const event = new Event('change', {bubbles: true});
     input.dispatchEvent(event);
   }
